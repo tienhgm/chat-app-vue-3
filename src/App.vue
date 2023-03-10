@@ -1,34 +1,55 @@
 <script setup lang="ts">
+import { onMounted, ref } from "vue";
 import socket from "./plugins/socket";
-function onConnectSocket() {
-  // @ts-ignore
+const username = ref("");
+const isLoggedIn = ref<boolean>(false);
+const users = ref<any>([]);
+function onSubmitLogin() {
+  isLoggedIn.value = true;
+  socket.auth = { username: username.value };
   socket.connect();
 }
+onMounted(() => {
+  socket.on("getUsers", (data: any) => {
+    data.forEach((user: any) => {
+      user.self = user.userId === socket.id;
+    });
+    console.log(data);
+    users.value = data.sort((a: any, b: any) => {
+      if (a.self) return -1;
+      if (b.self) return 1;
+      if (a.username < b.username) return -1;
+      return a.username > b.username ? 1 : 0;
+    });
+  });
+  socket.on("userJustConnected", (data: any) => {
+    users.value.push(data);
+  });
+});
 </script>
 
 <template>
-  <div>
-    <!-- <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a> -->
-    <button @click="onConnectSocket">On connect socket</button>
+  <form
+    @submit.prevent="onSubmitLogin"
+    class="flex justify-center mt-[3rem]"
+    v-if="!isLoggedIn"
+  >
+    <input type="text" v-model="username" placeholder="username" />
+    <button type="submit">Login</button>
+    <!-- <button @click="onConnectSocket">On connect socket</button> -->
+  </form>
+  <div class="grid grid-cols-12 gap-4 mt-[3rem]" v-else>
+    <div class="col-span-3">
+      <div class="text-xl font-bold">List user friend</div>
+      <ul>
+        <li v-for="user in users" :key="user.userId" class="flex items-center gap-1">
+          <span>{{ user.username }}</span>
+          <span class="inline-block w-1 h-1 rounded-full bg-green-500"></span>
+        </li>
+      </ul>
+    </div>
+    <div class="col-span-9">Chat workspace</div>
   </div>
 </template>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+<style scoped></style>
