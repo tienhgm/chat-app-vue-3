@@ -25,12 +25,20 @@ io.on("connection", (socket) => {
     users.push({
       userId: id,
       username: socket.username,
+      messages: []
     });
   }
   socket.emit("getUsers", users);
   socket.broadcast.emit("userJustConnected", {
     userId: socket.id,
     username: socket.username,
+    messages: []
+  });
+  socket.on("privateMessage", ({ message, to }) => {
+    socket.to(to).emit("privateMessageToReceiver", {
+      message,
+      from: socket.id,
+    });
   });
   socket.on("disconnect", () => {
     console.log("user disconnected");
