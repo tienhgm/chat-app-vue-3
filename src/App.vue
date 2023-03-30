@@ -4,6 +4,10 @@ import socket from "./plugins/socket";
 const username = ref("");
 const isLoggedIn = ref<boolean>(false);
 const users = ref<any>([]);
+const isFlipped = ref(false);
+function onToggleFlippedCard() {
+  isFlipped.value = !isFlipped.value;
+}
 function onSubmitLogin() {
   isLoggedIn.value = true;
   socket.auth = { username: username.value };
@@ -29,14 +33,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <form
+  <!-- <form
     @submit.prevent="onSubmitLogin"
     class="flex justify-center mt-[3rem]"
     v-if="!isLoggedIn"
   >
     <input type="text" v-model="username" placeholder="username" />
     <button type="submit">Login</button>
-    <!-- <button @click="onConnectSocket">On connect socket</button> -->
   </form>
   <div class="grid grid-cols-12 gap-4 mt-[3rem]" v-else>
     <div class="col-span-3">
@@ -49,7 +52,51 @@ onMounted(() => {
       </ul>
     </div>
     <div class="col-span-9">Chat workspace</div>
+  </div> -->
+  <div class="flex h-full justify-center">
+    <div class="card" @click="onToggleFlippedCard">
+      <div class="card__inner" :class="{ 'is-flipped': isFlipped }">
+        <div class="card__face card__face--front">
+          <div class="card__content">Front</div>
+        </div>
+        <div class="card__face card__face--back">
+          <div class="card__content">Back</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+.card {
+  display: inline-block;
+  &__inner {
+    width: 150px;
+    height: 200px;
+    transition: transform 0.4s;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    position: relative;
+  }
+  &__inner.is-flipped {
+    transform: rotateY(180deg);
+  }
+  &__face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    //----------
+    // quan trong
+    backface-visibility: hidden;
+    //-----------
+    overflow: hidden;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 3px 10px 3px rgb(0, 0, 0, 0.2);
+    &--back {
+      background-color: #f3f3f3;
+      transform: rotateY(-180deg);
+    }
+  }
+}
+</style>
